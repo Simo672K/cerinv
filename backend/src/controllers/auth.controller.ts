@@ -24,18 +24,6 @@ class Auth {
       });
     }
   }
-
-  static signUpController(req: Request, res: Response) {
-    //TODO: Signup controller
-    const { firstName, lastName, password, email } = req.body;
-    console.log({
-      firstName,
-      lastName,
-      password,
-      email,
-    });
-    res.sendStatus(201);
-  }
 }
 
 export default Auth;
