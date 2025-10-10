@@ -13,3 +13,43 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  profile   Profile?
+  createdAt DateTime @default(now())
+}
+
+model Profile {
+  id       Int     @id @default(autoincrement())
+  username String?
+  avatar   String?
+
+  // one to one relation with the user model
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  // one to many relation with the access, which means that an access role can be given to many profiles
+  accessId Int
+  access   Access @relation(fields: [accessId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Access {
+  id        Int       @id @default(autoincrement())
+  role      Role      @default(USER)
+  profiles  Profile[]
+  createdAt DateTime  @default(now())
+}
+
+// enums
+enum Role {
+  USER
+  ADMIN
+  STAFF
+}
