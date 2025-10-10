@@ -14,13 +14,14 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String   @unique
-  password  String
-  profile   Profile?
-  createdAt DateTime @default(now())
+  id         Int      @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  email      String   @unique
+  password   String
+  profile    Profile?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }
 
 model Profile {
