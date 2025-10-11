@@ -2,21 +2,27 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { TokenHandler } from "../utils/token";
 import dotenv from "dotenv";
+import { responseError } from "../utils/errors";
 
 dotenv.config();
 
+const tokenHandler = new TokenHandler(process.env.ACCESS_KEY!);
+const authService = new AuthService(tokenHandler);
+
 class Auth {
   static async signInController(req: Request, res: Response) {
-    //TODO : signin controller
     try {
       const { email, password } = req.body;
-      const tokenHandler = new TokenHandler(process.env.ACCESS_KEY!);
-      const authService = new AuthService(tokenHandler);
 
       const willSignIn = await authService.signIn(email, password);
-      console.log(willSignIn);
+      if (!willSignIn)
+        return res
+          .status(401)
+          .json(
+            responseError(401, "Invalid credentials", "UNAUTHORIZED_ACCESS")
+          );
 
-      res.sendStatus(204);
+      res.json(willSignIn);
     } catch (e) {
       console.log(e);
       res.status(500).json({

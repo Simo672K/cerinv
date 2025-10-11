@@ -1,6 +1,7 @@
 import { sign, verify } from "jsonwebtoken";
 
 interface TokenPayload {
+  role: string;
   email: string;
   id: number;
 }
