@@ -1,17 +1,25 @@
 import { sign, verify } from "jsonwebtoken";
 
-interface TokenPayload {
+interface AccessTokenPayload {
   role: string;
   email: string;
   id: number;
 }
 
-class TokenHandler {
-  constructor(private tokensecret: string) {}
+interface RefreshTokenPayload {
+  id: number;
+  sessionId: string;
+}
 
-  signToken(payload: TokenPayload): string {
+class TokenHandler {
+  constructor(
+    private tokensecret: string,
+    private type: "ACCESS" | "REFRESH"
+  ) {}
+
+  signToken(payload: AccessTokenPayload | RefreshTokenPayload): string {
     const signedToken = sign(payload, this.tokensecret, {
-      expiresIn: "15m",
+      expiresIn: this.type === "ACCESS" ? "15m" : "5h",
     });
 
     return signedToken;
@@ -22,7 +30,7 @@ class TokenHandler {
       token,
       this.tokensecret,
       {
-        maxAge: "15m",
+        maxAge: this.type === "ACCESS" ? "15m" : "5h",
       },
       (err, decoded) => {
         if (err) {

@@ -6,8 +6,12 @@ import { responseError } from "../utils/errors";
 
 dotenv.config();
 
-const tokenHandler = new TokenHandler(process.env.ACCESS_KEY!);
-const authService = new AuthService(tokenHandler);
+const accessTokenHandler = new TokenHandler(process.env.ACCESS_KEY!, "ACCESS");
+const refreshTokenHandler = new TokenHandler(
+  process.env.REFRESH_KEY!,
+  "REFRESH"
+);
+const authService = new AuthService(accessTokenHandler, refreshTokenHandler);
 
 class Auth {
   static async signInController(req: Request, res: Response) {
@@ -21,13 +25,20 @@ class Auth {
           .json(
             responseError(401, "Invalid credentials", "UNAUTHORIZED_ACCESS")
           );
-
-      res.json(willSignIn);
+      // refreshTokenHandler.signToken()
+      res.status(200).json({ ...willSignIn });
     } catch (e) {
       console.log(e);
-      res.status(500).json({
-        msg: "Internal server error",
-      });
+
+      res
+        .status(500)
+        .json(
+          responseError(
+            500,
+            "An error occured on the server, try again later.",
+            "INTERNAL_SERVER_ERROR"
+          )
+        );
     }
   }
 }

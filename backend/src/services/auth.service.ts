@@ -9,11 +9,15 @@ dotenv.config();
 
 interface SignedInRes {
   message: string;
-  token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 class AuthService {
-  constructor(private tokenHandler: TokenHandler) {}
+  constructor(
+    private asccessTokenHandler: TokenHandler,
+    private refreshTokenHandler: TokenHandler
+  ) {}
 
   // signin for now is only the credentials strategy for simplecity
   async signIn(email: string, password: string): Promise<SignedInRes | null> {
@@ -36,17 +40,25 @@ class AuthService {
 
     if (!isValidPassword) return null;
 
-    const token = this.tokenHandler.signToken({
+    const accessToken = this.asccessTokenHandler.signToken({
       role: expectedUser.profile!.access.role,
       email: expectedUser.email,
       id: expectedUser.id,
     });
 
+    const refreshToken = this.refreshTokenHandler.signToken({
+      id: expectedUser.id,
+      sessionId: "",
+    });
+
     return {
       message: "User signed in successfully!",
-      token,
+      accessToken,
+      refreshToken,
     };
   }
+
+  async issueRefreshToken() {}
 }
 
 export { AuthService };
