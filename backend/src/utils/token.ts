@@ -1,13 +1,13 @@
 import { JwtPayload, sign, verify } from "jsonwebtoken";
 
-interface AccessTokenPayload {
+export interface AccessTokenPayload {
   role: string;
   email: string;
   id: number;
 }
 
-interface RefreshTokenPayload {
-  id: number;
+export interface RefreshTokenPayload {
+  userId: number;
   sessionId: string;
 }
 
@@ -25,8 +25,8 @@ class TokenHandler {
     return signedToken;
   }
 
-  validateToken(token: string) {
-    let decodedPayload: JwtPayload = {};
+  validateToken(token: string): JwtPayload | null {
+    let decodedPayload: JwtPayload | null = null;
     verify(
       token,
       this.tokensecret,

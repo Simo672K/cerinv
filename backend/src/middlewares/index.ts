@@ -6,33 +6,80 @@ import {
   refreshTokenHandler,
 } from "../controllers/auth.controller";
 import dotenv from "dotenv";
+import { AccessTokenPayload, RefreshTokenPayload } from "../utils/token";
+import prisma from "../config/db";
 
 dotenv.config();
 
 class Middleware {
   static allowUsersOfRoleType = (allowedRoles: Role[]) =>
-    function (req: Request, res: Response, next: NextFunction) {
+    async function (req: Request, res: Response, next: NextFunction) {
       try {
         if (!req.cookies) throw new Error("invalid credentials");
         const { access_token, refresh_token } = req.cookies;
 
-        const { id, email, role } =
-          accessTokenHandler.validateToken(access_token);
-        const { sessionId } = refreshTokenHandler.validateToken(refresh_token);
+        const accessPayload = accessTokenHandler.validateToken(access_token);
+        const refreshPayload = refreshTokenHandler.validateToken(refresh_token);
+        if (!(refreshPayload || accessPayload)) {
+          throw new Error("User invalid credentials");
+        }
+        const { userId, sessionId } = refreshPayload as RefreshTokenPayload;
 
-        if (!allowedRoles.includes(role)) throw new Error();
-        req.context = {
-          sessionId: sessionId,
-          user: {
-            id,
-            email,
-            role,
+        if (accessPayload) {
+          const { id, email, role } = accessPayload as AccessTokenPayload;
+
+          if (!allowedRoles.includes(role as Role))
+            throw new Error(
+              "Restricted route, user cannot access this route. ACCESS_DENIED!"
+            );
+          req.context = {
+            sessionId: sessionId,
+            user: {
+              id,
+              email,
+              role: role as Role,
+            },
+          };
+
+          next();
+          return;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: {
+            id: userId,
           },
-        };
+          select: {
+            email: true,
+            profile: {
+              select: {
+                access: {
+                  select: {
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
+        });
 
-        console.log("access guarentied");
-
-        next();
+        if (user) {
+          const { email, profile } = user;
+          const newAccessToken = accessTokenHandler.signToken({
+            id: userId,
+            email,
+            role: profile!.access.role,
+          });
+          res.cookie("access_token", newAccessToken, {
+            httpOnly: true,
+            sameSite: "strict",
+          });
+          if (!allowedRoles.includes(profile!.access.role))
+            throw new Error(
+              "Restricted route, user cannot access this route. ACCESS_DENIED!"
+            );
+          next();
+        }
       } catch (e) {
         res
           .status(401)

@@ -51,7 +51,7 @@ class AuthService {
     const newSessionId = uuidv4();
 
     const refreshToken = this.refreshTokenHandler.signToken({
-      id: expectedUser.id,
+      userId: expectedUser.id,
       sessionId: newSessionId,
     });
 
