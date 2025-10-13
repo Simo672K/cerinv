@@ -14,30 +14,37 @@ datasource db {
 }
 
 model User {
-  id         Int      @id @default(autoincrement())
+  id         Int       @id @default(autoincrement())
   firstName  String
   lastName   String
-  email      String   @unique
+  email      String    @unique
   password   String
   profile    Profile?
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  user       Session[]
+  isVerified Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+}
+
+model Session {
+  id               String    @id @default(uuid())
+  isValid          Boolean   @default(true)
+  refreshTokenHash String
+  userId           Int
+  user             User      @relation(fields: [userId], references: [id])
+  createAt         DateTime  @default(now())
+  updatedAt        DateTime?
 }
 
 model Profile {
-  id       Int     @id @default(autoincrement())
-  username String?
-  avatar   String?
-
-  // one to one relation with the user model
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
-
-  // one to many relation with the access, which means that an access role can be given to many profiles
-  accessId Int
-  access   Access @relation(fields: [accessId], references: [id])
-
-  createdAt DateTime @default(now())
+  id        Int       @id @default(autoincrement())
+  username  String?
+  avatar    String?
+  userId    Int       @unique
+  user      User      @relation(fields: [userId], references: [id])
+  accessId  Int
+  access    Access    @relation(fields: [accessId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
 }
 
 model Access {

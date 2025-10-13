@@ -3,6 +3,8 @@
 import prisma from "../config/db";
 import PasswordHandler from "../utils/password";
 import { TokenHandler } from "../utils/token";
+import { v4 as uuidv4 } from "uuid";
+import { hash } from "bcrypt";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -15,7 +17,7 @@ interface SignedInRes {
 
 class AuthService {
   constructor(
-    private asccessTokenHandler: TokenHandler,
+    private accessTokenHandler: TokenHandler,
     private refreshTokenHandler: TokenHandler
   ) {}
 
@@ -40,16 +42,38 @@ class AuthService {
 
     if (!isValidPassword) return null;
 
-    const accessToken = this.asccessTokenHandler.signToken({
+    const accessToken = this.accessTokenHandler.signToken({
       role: expectedUser.profile!.access.role,
       email: expectedUser.email,
       id: expectedUser.id,
     });
 
+    const newSessionId = uuidv4();
+
     const refreshToken = this.refreshTokenHandler.signToken({
       id: expectedUser.id,
-      sessionId: "",
+      sessionId: newSessionId,
     });
+
+    const refreshTokenHash = await hash(refreshToken, 10);
+
+    try {
+      await prisma.session.create({
+        data: {
+          id: newSessionId,
+          userId: expectedUser.id,
+          refreshTokenHash,
+        },
+      });
+
+      // * maybe in the future: store this session somewhere
+    } catch (e) {
+      throw new Error(
+        `${
+          (e as Error).name
+        }. Failed to create a record the new session on the database!`
+      );
+    }
 
     return {
       message: "User signed in successfully!",

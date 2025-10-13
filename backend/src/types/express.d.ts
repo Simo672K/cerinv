@@ -9,8 +9,10 @@ declare global {
     }
 
     interface Request {
-      user?: UserPayload;
-      sessionId?: string;
+      context?: {
+        user?: UserPayload;
+        sessionId?: string;
+      };
     }
   }
 }

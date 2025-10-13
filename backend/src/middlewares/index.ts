@@ -21,11 +21,13 @@ class Middleware {
         const { sessionId } = refreshTokenHandler.validateToken(refresh_token);
 
         if (!allowedRoles.includes(role)) throw new Error();
-        req.sessionId = sessionId;
-        req.user = {
-          id,
-          email,
-          role,
+        req.context = {
+          sessionId: sessionId,
+          user: {
+            id,
+            email,
+            role,
+          },
         };
 
         console.log("access guarentied");
