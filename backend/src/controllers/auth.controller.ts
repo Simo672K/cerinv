@@ -6,8 +6,11 @@ import { responseError } from "../utils/errors";
 
 dotenv.config();
 
-const accessTokenHandler = new TokenHandler(process.env.ACCESS_KEY!, "ACCESS");
-const refreshTokenHandler = new TokenHandler(
+export const accessTokenHandler = new TokenHandler(
+  process.env.ACCESS_KEY!,
+  "ACCESS"
+);
+export const refreshTokenHandler = new TokenHandler(
   process.env.REFRESH_KEY!,
   "REFRESH"
 );
@@ -26,7 +29,16 @@ class Auth {
             responseError(401, "Invalid credentials", "UNAUTHORIZED_ACCESS")
           );
       // refreshTokenHandler.signToken()
-      res.status(200).json({ ...willSignIn });
+      res.cookie("access_token", willSignIn.accessToken, {
+        sameSite: "strict",
+        httpOnly: true,
+      });
+      res.cookie("refresh_token", willSignIn.refreshToken, {
+        sameSite: "strict",
+        httpOnly: true,
+      });
+
+      res.status(200).json({ message: willSignIn.message });
     } catch (e) {
       console.log(e);
 

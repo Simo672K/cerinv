@@ -1,4 +1,4 @@
-import { sign, verify } from "jsonwebtoken";
+import { JwtPayload, sign, verify } from "jsonwebtoken";
 
 interface AccessTokenPayload {
   role: string;
@@ -26,7 +26,8 @@ class TokenHandler {
   }
 
   validateToken(token: string) {
-    const jwt = verify(
+    let decodedPayload: JwtPayload = {};
+    verify(
       token,
       this.tokensecret,
       {
@@ -34,11 +35,14 @@ class TokenHandler {
       },
       (err, decoded) => {
         if (err) {
-          console.log(err.message);
-          return;
-        } else console.log(decoded);
+          throw new Error();
+        } else {
+          decodedPayload = decoded as JwtPayload;
+        }
       }
     );
+
+    return decodedPayload;
   }
 }
 

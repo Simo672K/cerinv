@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import prisma from "../config/db";
 
 interface UserData {
@@ -6,8 +7,6 @@ interface UserData {
   email: string;
   password: string;
 }
-
-type Role = "ADMIN" | "USER" | "STAFF";
 
 class UserService {
   async getAllUsers() {

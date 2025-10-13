@@ -1,5 +1,8 @@
 {
   // Visit https://aka.ms/tsconfig to read more about this file
+  "include": [
+    "./src/**/*"
+  ],
   "compilerOptions": {
     // File Layout
     "rootDir": "./src",
@@ -9,7 +12,7 @@
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    "types": [],
+    // "types": [],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -40,5 +43,8 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+    "typeRoots": [
+      "./src/types", "./node_modules/@types"
+    ]
   }
 }

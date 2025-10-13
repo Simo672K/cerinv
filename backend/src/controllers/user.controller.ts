@@ -93,7 +93,7 @@ class User {
 
   static async listUsersController(req: Request, res: Response) {
     const users = await User.userService.getAllUsers();
-
+    console.log(req.user);
     res.json({
       count: users.length,
       data: users,
