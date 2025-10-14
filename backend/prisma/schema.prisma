@@ -28,7 +28,7 @@ model User {
 model Session {
   id               String    @id @default(uuid())
   isValid          Boolean   @default(true)
-  refreshTokenHash String
+  refreshTokenHash String    @unique
   userId           Int
   user             User      @relation(fields: [userId], references: [id])
   createAt         DateTime  @default(now())

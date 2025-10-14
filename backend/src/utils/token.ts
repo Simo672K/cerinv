@@ -1,4 +1,5 @@
 import { JwtPayload, sign, verify } from "jsonwebtoken";
+import { ACCESS_TOKEN_MAX_AGE, REFRESH_TOKEN_MAX_AGE } from "./constants";
 
 export interface AccessTokenPayload {
   role: string;
@@ -19,7 +20,8 @@ class TokenHandler {
 
   signToken(payload: AccessTokenPayload | RefreshTokenPayload): string {
     const signedToken = sign(payload, this.tokensecret, {
-      expiresIn: this.type === "ACCESS" ? "15m" : "5h",
+      expiresIn:
+        this.type === "ACCESS" ? ACCESS_TOKEN_MAX_AGE : REFRESH_TOKEN_MAX_AGE,
     });
 
     return signedToken;
@@ -31,11 +33,12 @@ class TokenHandler {
       token,
       this.tokensecret,
       {
-        maxAge: this.type === "ACCESS" ? "15m" : "5h",
+        maxAge:
+          this.type === "ACCESS" ? ACCESS_TOKEN_MAX_AGE : REFRESH_TOKEN_MAX_AGE,
       },
       (err, decoded) => {
         if (err) {
-          throw new Error();
+          decodedPayload = null;
         } else {
           decodedPayload = decoded as JwtPayload;
         }

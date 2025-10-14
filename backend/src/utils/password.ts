@@ -1,9 +1,10 @@
 import { compare, hash } from "bcrypt";
+import { HASH_ROUNDS } from "./constants";
 
 class PasswordHandler {
   static async hashPassword(rawPassword: string) {
     try {
-      const hashedPassword = await hash(rawPassword, 10);
+      const hashedPassword = await hash(rawPassword, HASH_ROUNDS);
 
       return hashedPassword;
     } catch (e) {

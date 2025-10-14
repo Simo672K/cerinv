@@ -53,6 +53,33 @@ class Auth {
         );
     }
   }
+
+  static async signOutController(req: Request, res: Response) {
+    console.log(req.context);
+    if (req.context) {
+      const isSignedOut = await authService.signout(req.context!);
+
+      if (!isSignedOut) {
+        return res
+          .status(500)
+          .json(
+            responseError(
+              500,
+              "An error occured on the server",
+              "INTERNAL_SERVER_ERROR"
+            )
+          );
+      }
+
+      // cleaning token cookies
+      res.clearCookie("access_token", { httpOnly: true, sameSite: "strict" });
+      res.clearCookie("refresh_token", { httpOnly: true, sameSite: "strict" });
+    }
+
+    res.status(301).json({
+      message: "Signed out successfully!",
+    });
+  }
 }
 
 export default Auth;

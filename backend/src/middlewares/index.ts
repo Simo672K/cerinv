@@ -16,8 +16,13 @@ class Middleware {
         if (!access_token && !refresh_token)
           throw new Error("Missing authentication tokens");
 
-        // Try access token first
         const accessPayload = accessTokenHandler.validateToken(access_token);
+        const refreshPayload = refreshTokenHandler.validateToken(refresh_token);
+
+        if (!refreshPayload) throw new Error("Invalid refresh token");
+
+        const { userId, sessionId } = refreshPayload;
+
         if (accessPayload) {
           const { id, email, role } = accessPayload;
 
@@ -25,18 +30,12 @@ class Middleware {
             throw new Error("ACCESS_DENIED");
 
           req.context = {
-            sessionId: "", // no refresh needed
+            sessionId,
             user: { id, email, role },
           };
 
           return next();
         }
-
-        // Fall back to refresh
-        const refreshPayload = refreshTokenHandler.validateToken(refresh_token);
-        if (!refreshPayload) throw new Error("Invalid refresh token");
-
-        const { userId, sessionId } = refreshPayload;
 
         const session = await prisma.session.findUnique({
           where: { id: sessionId },
@@ -75,7 +74,7 @@ class Middleware {
 
         next();
       } catch (e) {
-        console.error("Auth middleware error:", (e as Error).message);
+        console.error("Auth middleware error:", e);
         res
           .status(401)
           .json(

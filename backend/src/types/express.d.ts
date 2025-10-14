@@ -8,11 +8,13 @@ declare global {
       role: Role;
     }
 
+    interface Context {
+      user: UserPayload;
+      sessionId: string;
+    }
+
     interface Request {
-      context?: {
-        user?: UserPayload;
-        sessionId?: string;
-      };
+      context?: Context;
     }
   }
 }

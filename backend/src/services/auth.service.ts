@@ -1,11 +1,12 @@
 // what I need in the future is for all possible login stratigies there should be an interface that should be
 // implemented as wrapper around the strategy in order to be used in the auth service as the desired login strategy
-import prisma from "../config/db";
-import PasswordHandler from "../utils/password";
-import { TokenHandler } from "../utils/token";
-import { v4 as uuidv4 } from "uuid";
 import { hash } from "bcrypt";
 import dotenv from "dotenv";
+import { v4 as uuidv4 } from "uuid";
+import prisma from "../config/db";
+import { HASH_ROUNDS } from "../utils/constants";
+import PasswordHandler from "../utils/password";
+import { TokenHandler } from "../utils/token";
 
 dotenv.config();
 
@@ -55,7 +56,7 @@ class AuthService {
       sessionId: newSessionId,
     });
 
-    const refreshTokenHash = await hash(refreshToken, 10);
+    const refreshTokenHash = await hash(refreshToken, HASH_ROUNDS);
 
     try {
       await prisma.session.create({
@@ -82,7 +83,48 @@ class AuthService {
     };
   }
 
-  async issueRefreshToken() {}
+  async signout(context: Express.Context) {
+    // delelte the session with the specified id by disabling the token validity, requested from the context in the express request context
+    try {
+      await prisma.session.update({
+        data: {
+          isValid: false,
+          updatedAt: new Date(),
+        },
+        where: {
+          id: context.sessionId,
+        },
+      });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  }
+
+  async refreshCredentials(refreshToken: string): Promise<string | Error> {
+    const refreshTokenHash = await hash(refreshToken, HASH_ROUNDS);
+    const userSession = await prisma.session.findUnique({
+      where: { refreshTokenHash },
+      include: {
+        user: {
+          include: {
+            profile: { select: { access: { select: { role: true } } } },
+          },
+        },
+      },
+    });
+
+    if (!userSession || !userSession.isValid) {
+      return new Error("invalid token, there is no session for this token");
+    }
+
+    return this.accessTokenHandler.signToken({
+      id: userSession.user.id,
+      email: userSession.user.email,
+      role: userSession.user.profile!.access.role,
+    });
+  }
 }
 
 export { AuthService };

@@ -12,10 +12,14 @@ userRoutes.post(
 );
 userRoutes.get(
   "/user/all",
-  Middleware.authorizeRoles([Role.USER, Role.ADMIN]),
+  Middleware.authorizeRoles([Role.ADMIN]),
   controllerErrorRecoverer(User.listUsersController)
 );
-userRoutes.get("/user/:id", controllerErrorRecoverer(User.getUser));
+userRoutes.get(
+  "/user/:id",
+  Middleware.authorizeRoles([Role.ADMIN, Role.STAFF, Role.USER]),
+  controllerErrorRecoverer(User.getUser)
+);
 // userRoutes.put("/user/:id");
 // userRoutes.delete("/user/:id");
 
