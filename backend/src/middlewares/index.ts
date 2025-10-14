@@ -5,89 +5,84 @@ import {
   accessTokenHandler,
   refreshTokenHandler,
 } from "../controllers/auth.controller";
-import dotenv from "dotenv";
-import { AccessTokenPayload, RefreshTokenPayload } from "../utils/token";
 import prisma from "../config/db";
 
-dotenv.config();
-
 class Middleware {
-  static allowUsersOfRoleType = (allowedRoles: Role[]) =>
+  static authorizeRoles = (allowedRoles: Role[]) =>
     async function (req: Request, res: Response, next: NextFunction) {
       try {
-        if (!req.cookies) throw new Error("invalid credentials");
-        const { access_token, refresh_token } = req.cookies;
+        const { access_token, refresh_token } = req.cookies || {};
 
+        if (!access_token && !refresh_token)
+          throw new Error("Missing authentication tokens");
+
+        // Try access token first
         const accessPayload = accessTokenHandler.validateToken(access_token);
-        const refreshPayload = refreshTokenHandler.validateToken(refresh_token);
-        if (!(refreshPayload || accessPayload)) {
-          throw new Error("User invalid credentials");
-        }
-        const { userId, sessionId } = refreshPayload as RefreshTokenPayload;
-
         if (accessPayload) {
-          const { id, email, role } = accessPayload as AccessTokenPayload;
+          const { id, email, role } = accessPayload;
 
           if (!allowedRoles.includes(role as Role))
-            throw new Error(
-              "Restricted route, user cannot access this route. ACCESS_DENIED!"
-            );
+            throw new Error("ACCESS_DENIED");
+
           req.context = {
-            sessionId: sessionId,
-            user: {
-              id,
-              email,
-              role: role as Role,
-            },
+            sessionId: "", // no refresh needed
+            user: { id, email, role },
           };
 
-          next();
-          return;
+          return next();
         }
 
+        // Fall back to refresh
+        const refreshPayload = refreshTokenHandler.validateToken(refresh_token);
+        if (!refreshPayload) throw new Error("Invalid refresh token");
+
+        const { userId, sessionId } = refreshPayload;
+
+        const session = await prisma.session.findUnique({
+          where: { id: sessionId },
+        });
+        if (!session || !session.isValid) throw new Error("Invalid session");
+
         const user = await prisma.user.findUnique({
-          where: {
-            id: userId,
-          },
+          where: { id: userId },
           select: {
             email: true,
-            profile: {
-              select: {
-                access: {
-                  select: {
-                    role: true,
-                  },
-                },
-              },
-            },
+            profile: { select: { access: { select: { role: true } } } },
           },
         });
 
-        if (user) {
-          const { email, profile } = user;
-          const newAccessToken = accessTokenHandler.signToken({
-            id: userId,
-            email,
-            role: profile!.access.role,
-          });
-          res.cookie("access_token", newAccessToken, {
-            httpOnly: true,
-            sameSite: "strict",
-          });
-          if (!allowedRoles.includes(profile!.access.role))
-            throw new Error(
-              "Restricted route, user cannot access this route. ACCESS_DENIED!"
-            );
-          next();
-        }
+        if (!user) throw new Error("User not found");
+
+        const { email, profile } = user;
+        const role = profile!.access.role;
+
+        if (!allowedRoles.includes(role)) throw new Error("ACCESS_DENIED");
+
+        // Issue new access token
+        const newAccessToken = accessTokenHandler.signToken({
+          id: userId,
+          email,
+          role,
+        });
+        res.cookie("access_token", newAccessToken, {
+          httpOnly: true,
+          sameSite: "strict",
+          secure: process.env.NODE_ENV === "production",
+          maxAge: 15 * 60 * 1000,
+        });
+
+        req.context = { sessionId, user: { id: userId, email, role } };
+
+        next();
       } catch (e) {
+        console.error("Auth middleware error:", (e as Error).message);
         res
           .status(401)
           .json(
             responseError(
               401,
-              "Unothorized access, try loggin in again.",
-              "UNOTHORIZED_ACCESS"
+              "Unauthorized access. Please log in again.",
+              "UNAUTHORIZED_ACCESS"
             )
           );
       }

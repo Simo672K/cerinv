@@ -12,7 +12,7 @@ userRoutes.post(
 );
 userRoutes.get(
   "/user/all",
-  Middleware.allowUsersOfRoleType([Role.USER, Role.ADMIN]),
+  Middleware.authorizeRoles([Role.USER, Role.ADMIN]),
   controllerErrorRecoverer(User.listUsersController)
 );
 userRoutes.get("/user/:id", controllerErrorRecoverer(User.getUser));
