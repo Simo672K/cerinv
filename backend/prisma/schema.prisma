@@ -76,8 +76,8 @@ model Event {
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  inviteTemplateId Int
-  inviteTemplate   InviteTemplate @relation(fields: [inviteTemplateId], references: [id])
+  inviteTemplateId Int?
+  inviteTemplate   InviteTemplate? @relation(fields: [inviteTemplateId], references: [id])
 
   invitations Invitation[]
   createdAt   DateTime?    @default(now())

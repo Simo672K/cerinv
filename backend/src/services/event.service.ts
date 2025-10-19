@@ -1,10 +1,12 @@
-import { Event } from "@prisma/client";
+import { Event, Mesurement } from "@prisma/client";
 import prisma from "../config/db";
 
 interface EventData {
   name: string;
   duration: number;
   startDate: Date;
+  startHour: string;
+  mesurement: Mesurement;
   userId: number;
 }
 
@@ -29,9 +31,13 @@ class EventService {
         },
       });
       return userEvents;
-    } catch (e) {}
+    } catch (e) {
+      return new Error();
+    }
   }
-  async getEvent() {}
+  async getEvent(eventId: number) {
+    await prisma.event.findUnique;
+  }
   async updateEvent() {}
   async deleteEvent() {}
 }

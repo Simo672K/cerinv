@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import EventService from "../services/event.service";
 import { responseError } from "../utils/errors";
+import { Mesurement } from "@prisma/client";
 
 class Event {
   static async createEventController(req: Request, res: Response) {
-    const { name, startDate, duration } = req.body;
+    const { name, startDate, duration, startHour, mesurement } = req.body;
 
     if (!name || !startDate || !duration) {
       return res
@@ -22,6 +23,8 @@ class Event {
       name: name as string,
       duration: duration as number,
       startDate: startDate as Date,
+      startHour: startHour as string,
+      mesurement: mesurement as Mesurement,
       userId: req.context!.user.id,
     });
 
