@@ -21,6 +21,8 @@ model User {
   password   String
   profile    Profile?
   user       Session[]
+  events     Event[]
+  invitees   Invitee[]
   isVerified Boolean   @default(false)
   createdAt  DateTime  @default(now())
 }
@@ -54,9 +56,64 @@ model Access {
   createdAt DateTime  @default(now())
 }
 
+model InviteTemplate {
+  id        Int       @id @default(autoincrement())
+  template  String
+  events    Event[]
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
+}
+
+model Event {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  startDate  DateTime
+  duration   Int
+  mesurement Mesurement @default(HOUR)
+  startHour  String
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  inviteTemplateId Int
+  inviteTemplate   InviteTemplate @relation(fields: [inviteTemplateId], references: [id])
+
+  invitations Invitation[]
+  createdAt   DateTime?    @default(now())
+  updatedAt   DateTime?
+}
+
+model Invitee {
+  id            Int          @id @default(autoincrement())
+  fullName      String
+  phoneNumber   String?
+  email         String?
+  addedByUserId Int
+  addedByUser   User         @relation(fields: [addedByUserId], references: [id])
+  invitations   Invitation[]
+  createdAt     DateTime?    @default(now())
+}
+
+model Invitation {
+  id        String    @id @default(uuid())
+  inviteeId Int
+  invitee   Invitee   @relation(fields: [inviteeId], references: [id])
+  eventId   Int
+  event     Event     @relation(fields: [eventId], references: [id])
+  createdAt DateTime? @default(now())
+  updatedAt DateTime?
+}
+
 // enums
 enum Role {
   USER
   ADMIN
   STAFF
+}
+
+enum Mesurement {
+  DAY
+  HOUR
+  MINUTE
 }
