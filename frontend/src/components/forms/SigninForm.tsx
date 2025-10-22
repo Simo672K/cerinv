@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -8,9 +8,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { KeyRound } from "lucide-react";
-// import {zodResolver} from "@hookform/resolvers/zod"
+import { type SigninSchemaType, signinSchema } from "@/schemas/signinSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { KeyRound, LoaderCircle } from "lucide-react";
+import { useForm } from "react-hook-form";
 
 const SigninForm = () => {
   const form = useForm({
@@ -18,10 +19,10 @@ const SigninForm = () => {
       email: "",
       password: "",
     },
-    // resolver: zodResolver();
+    resolver: zodResolver(signinSchema),
   });
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: SigninSchemaType) => {
     console.log(data);
   };
 
@@ -61,6 +62,7 @@ const SigninForm = () => {
         />
         <Button type="submit" className="mt-6 w-full">
           <KeyRound />
+          {false && <LoaderCircle className="animate-spin" />}
           Sign in
         </Button>
       </form>
